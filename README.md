@@ -34,6 +34,24 @@ bun run dev
 bun run tauri dev
 ```
 
+### Android Development
+
+```bash
+# Initialize Android development environment (first time only)
+bun run tauri android init
+
+# Run the app on Android device or emulator
+bun run tauri android dev
+
+# Build APK for Android
+bun run tauri android build
+```
+
+**Prerequisites for Android:**
+- [Android SDK](https://developer.android.com/studio)
+- [Android NDK](https://developer.android.com/ndk)
+- Android emulator or connected device
+
 ### Building
 
 ```bash
