@@ -82,7 +82,11 @@
   }
 </script>
 
-<div class="p-3 sm:p-5 md:p-8 text-center w-screen min-h-screen flex flex-col items-center justify-center bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50 transition-colors">
+<div class="absolute top-8 right-3 sm:top-8 sm:right-5">
+  <a href="/week" class="px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors">
+    週間表示
+  </a>
+</div>
   <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 md:mb-6">今日のチェック</h1>
   <p class="text-base sm:text-lg md:text-xl mb-8 sm:mb-10 md:mb-12 text-neutral-600 dark:text-neutral-400">{today.toLocaleDateString("ja-JP")}</p>
 
@@ -108,5 +112,3 @@
       <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{getNightTimeDisplay()}に押せるようになります</p>
     </div>
   </div>
-</div>
-

@@ -46,7 +46,6 @@ async fn get_recent_checks() -> Result<Vec<DailyCheck>, String> {
         .map_err(|e| e.to_string())?;
 
     let body = resp.text().await.map_err(|e| e.to_string())?;
-    println!("Supabaseからのレスポンス: {}", body);
     let checks: Vec<DailyCheck> =
         serde_json::from_str(&body).map_err(|e| format!("JSONパース失敗: {}", e))?;
 
