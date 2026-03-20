@@ -99,7 +99,7 @@
       >
         {morningChecked ? "朝チェック済み ✓" : "朝のチェック"}
       </button>
-      <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{getMorningTimeDisplay()}に押せるようになります</p>
+      <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{getMorningTimeDisplay()}に押せます</p>
     </div>
     <div>
       <button
@@ -109,6 +109,6 @@
       >
         {nightChecked ? "夜チェック済み ✓" : "夜のチェック"}
       </button>
-      <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{getNightTimeDisplay()}に押せるようになります</p>
+      <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{getNightTimeDisplay()}に押せます</p>
     </div>
   </div>
