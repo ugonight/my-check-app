@@ -4,7 +4,12 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
-  "rust-analyzer.debug.sourceLanguages": ["rust"],
+  "rust-analyzer.debug.sourceLanguages": [
+    "rust"
+  ],
   "debug.javascript.autoAttachFilter": "smart",
-  "debug.javascript.autoAttachSmartFilter": "all"
+  "debug.javascript.autoAttachSmartFilter": "all",
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }
