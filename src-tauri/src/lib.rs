@@ -3,19 +3,17 @@ use serde::{Deserialize, Serialize};
 use tauri::command;
 
 fn get_supabase_url() -> String {
-    dotenvy::var("SUPABASE_URL")
-        .unwrap_or_else(|_| {
-            eprintln!("警告: SUPABASE_URL環境変数が見つかりません");
-            String::new()
-        })
+    dotenvy::var("SUPABASE_URL").unwrap_or_else(|_| {
+        eprintln!("警告: SUPABASE_URL環境変数が見つかりません");
+        String::new()
+    })
 }
 
 fn get_supabase_key() -> String {
-    dotenvy::var("SUPABASE_KEY")
-        .unwrap_or_else(|_| {
-            eprintln!("警告: SUPABASE_KEY環境変数が見つかりません");
-            String::new()
-        })
+    dotenvy::var("SUPABASE_KEY").unwrap_or_else(|_| {
+        eprintln!("警告: SUPABASE_KEY環境変数が見つかりません");
+        String::new()
+    })
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -26,9 +24,7 @@ struct DailyCheck {
     check_type: i32, // Rustの"type"予約語回避
 }
 
-// 直近30件取得（Svelte側で「今日」判定）
-#[command]
-async fn get_recent_checks() -> Result<Vec<DailyCheck>, String> {
+fn create_authenticated_client() -> Result<Postgrest, String> {
     let supabase_url = get_supabase_url();
     let supabase_key = get_supabase_key();
 
@@ -36,9 +32,15 @@ async fn get_recent_checks() -> Result<Vec<DailyCheck>, String> {
         return Err("Supabaseの設定が不足しています。.envファイルをご確認ください。".to_string());
     }
 
-    let client = Postgrest::new(&supabase_url)
+    Ok(Postgrest::new(&supabase_url)
         .insert_header("apikey", &supabase_key)
-        .insert_header("Authorization", format!("Bearer {}", supabase_key));
+        .insert_header("Authorization", format!("Bearer {}", supabase_key)))
+}
+
+// 直近30件取得（Svelte側で「今日」判定）
+#[command]
+async fn get_recent_checks() -> Result<Vec<DailyCheck>, String> {
+    let client = create_authenticated_client()?;
 
     let resp = client
         .from("daily_checks")
@@ -64,17 +66,7 @@ async fn insert_check(check_type: i32) -> Result<(), String> {
         return Err("typeは0または1のみ".to_string());
     }
 
-    let supabase_url = get_supabase_url();
-    let supabase_key = get_supabase_key();
-
-    if supabase_url.is_empty() || supabase_key.is_empty() {
-        return Err("Supabaseの設定が不足しています。.envファイルをご確認ください。".to_string());
-    }
-
-    let client = Postgrest::new(&supabase_url)
-        .insert_header("apikey", &supabase_key)
-        .insert_header("Authorization", format!("Bearer {}", supabase_key));
-
+    let client = create_authenticated_client()?;
     let payload = serde_json::json!({ "type": check_type });
 
     client
