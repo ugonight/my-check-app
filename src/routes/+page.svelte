@@ -4,7 +4,7 @@
 
   let morningChecked = $state(false);
   let nightChecked = $state(false);
-  let todayChecks: { check_type: number; time: string }[] = $state([]);
+  let todayChecks: { type: number; time: string }[] = $state([]);
 
   const today = new Date();
 
@@ -17,10 +17,10 @@
 
   onMount(async () => {
     try {
-      const checks = await invoke< { check_type: number; time: string }[]>('get_recent_checks');
+      const checks = await invoke<{ type: number; time: string }[]>('get_recent_checks');
       todayChecks = checks.filter(c => isToday(c.time));
-      morningChecked = todayChecks.some(c => c.check_type === 0);
-      nightChecked = todayChecks.some(c => c.check_type === 1);
+      morningChecked = todayChecks.some(c => c.type === 0);
+      nightChecked = todayChecks.some(c => c.type === 1);
     } catch (e) {
       console.error(e);
       alert('データ取得失敗: ' + e);
@@ -43,10 +43,10 @@
   <h1>今日のチェック</h1>
   <p style="font-size: 1.2em;">{today.toLocaleDateString('ja-JP')}</p>
 
-  <button on:click={() => checkIn(0)} disabled={morningChecked} style="...">
+  <button onclick={() => checkIn(0)} disabled={morningChecked} style="...">
     {morningChecked ? '朝チェック済み ✓' : '朝のチェック'}
   </button>
-  <button on:click={() => checkIn(1)} disabled={nightChecked} style="...">
+  <button onclick={() => checkIn(1)} disabled={nightChecked} style="...">
     {nightChecked ? '夜チェック済み ✓' : '夜のチェック'}
   </button>
 </div>
