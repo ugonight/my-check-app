@@ -2,19 +2,54 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core"; // ← これだけ追加！
 
+  // ===== 時間帯設定 =====
+  const MORNING_START = 6;      // 朝のチェック開始時刻
+  const MORNING_END = 12;       // 朝のチェック終了時刻
+  const NIGHT_START = 18;       // 夜のチェック開始時刻
+  const NIGHT_END = 1;          // 夜のチェック終了時刻（25時 = 翌日1時）
+  const DATE_RESET_HOUR = 4;    // 日付変更時刻
+
   let morningChecked = $state(false);
   let nightChecked = $state(false);
   let todayChecks: { type: number; time: string }[] = $state([]);
 
   const today = new Date();
 
+  // 日付変更時刻を基準に日付を計算
+  function getAdjustedDate(date: Date): Date {
+    const adjusted = new Date(date);
+    if (adjusted.getHours() < DATE_RESET_HOUR) {
+      adjusted.setDate(adjusted.getDate() - 1);
+    }
+    return adjusted;
+  }
+
   function isToday(timestamp: string): boolean {
-    const d = new Date(timestamp);
+    const d = getAdjustedDate(new Date(timestamp));
+    const t = getAdjustedDate(today);
     return (
-      d.getFullYear() === today.getFullYear() &&
-      d.getMonth() === today.getMonth() &&
-      d.getDate() === today.getDate()
+      d.getFullYear() === t.getFullYear() &&
+      d.getMonth() === t.getMonth() &&
+      d.getDate() === t.getDate()
     );
+  }
+
+  function isInMorningWindow(): boolean {
+    const hour = today.getHours();
+    return hour >= MORNING_START && hour < MORNING_END;
+  }
+
+  function isInNightWindow(): boolean {
+    const hour = today.getHours();
+    return hour >= NIGHT_START || hour < NIGHT_END;
+  }
+
+  function getMorningTimeDisplay(): string {
+    return `${MORNING_START}:00～${MORNING_END}:00`;
+  }
+
+  function getNightTimeDisplay(): string {
+    return `${NIGHT_START}:00～${25}:00`;
   }
 
   onMount(async () => {
@@ -31,6 +66,12 @@
   });
 
   async function checkIn(type: 0 | 1) {
+    const isValid = type === 0 ? isInMorningWindow() : isInNightWindow();
+    if (!isValid) {
+      const timeStr = type === 0 ? getMorningTimeDisplay() : getNightTimeDisplay();
+      alert(`指定の時間帯（${timeStr}）のみ押せます`);
+      return;
+    }
     try {
       await invoke("insert_check", { checkType: type });
       if (type === 0) morningChecked = true;
@@ -46,20 +87,26 @@
   <p class="text-base sm:text-lg md:text-xl mb-8 sm:mb-10 md:mb-12 text-neutral-600 dark:text-neutral-400">{today.toLocaleDateString("ja-JP")}</p>
 
   <div class="space-y-3 sm:space-y-4 w-full sm:w-auto max-w-xs">
-    <button
-      onclick={() => checkIn(0)}
-      disabled={morningChecked}
-      class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
-    >
-      {morningChecked ? "朝チェック済み ✓" : "朝のチェック"}
-    </button>
-    <button
-      onclick={() => checkIn(1)}
-      disabled={nightChecked}
-      class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
-    >
-      {nightChecked ? "夜チェック済み ✓" : "夜のチェック"}
-    </button>
+    <div>
+      <button
+        onclick={() => checkIn(0)}
+        disabled={morningChecked || !isInMorningWindow()}
+        class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
+      >
+        {morningChecked ? "朝チェック済み ✓" : "朝のチェック"}
+      </button>
+      <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{getMorningTimeDisplay()}に押せるようになります</p>
+    </div>
+    <div>
+      <button
+        onclick={() => checkIn(1)}
+        disabled={nightChecked || !isInNightWindow()}
+        class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
+      >
+        {nightChecked ? "夜チェック済み ✓" : "夜のチェック"}
+      </button>
+      <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{getNightTimeDisplay()}に押せるようになります</p>
+    </div>
   </div>
 </div>
 
