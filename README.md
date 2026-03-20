@@ -25,6 +25,32 @@ bun install
 bun run dev
 ```
 
+### Supabase Setup
+
+1. **Create a Supabase Project**
+   - Go to [Supabase](https://supabase.com/)
+   - Create a new project and note your Project URL and API Key
+
+2. **Create the Database Table**
+   - In Supabase dashboard, go to SQL Editor
+   - Run the following SQL query:
+
+   ```sql
+   CREATE TABLE daily_checks (
+     id SERIAL PRIMARY KEY,                    -- 整数の連番・主キー
+     time TIMESTAMPTZ DEFAULT NOW(),           -- 記録した時刻（タイムゾーン対応）
+     type INTEGER NOT NULL CHECK (type IN (0, 1))  -- 0=朝、1=夜
+   );
+   ```
+
+3. **Configure Environment Variables**
+   - Create a `.env` file in the `src-tauri` directory:
+
+   ```
+   VITE_SUPABASE_URL=https://<your-project>.supabase.co
+   VITE_SUPABASE_ANON_KEY=<your-anon-key>
+   ```
+
 ## Development
 
 ### Desktop Development
