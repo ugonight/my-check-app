@@ -3,17 +3,11 @@ use serde::{Deserialize, Serialize};
 use tauri::command;
 
 fn get_supabase_url() -> String {
-    dotenvy::var("SUPABASE_URL").unwrap_or_else(|_| {
-        eprintln!("警告: SUPABASE_URL環境変数が見つかりません");
-        String::new()
-    })
+    env!("SUPABASE_URL").to_string()
 }
 
 fn get_supabase_key() -> String {
-    dotenvy::var("SUPABASE_KEY").unwrap_or_else(|_| {
-        eprintln!("警告: SUPABASE_KEY環境変数が見つかりません");
-        String::new()
-    })
+    env!("SUPABASE_KEY").to_string()
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
