@@ -1,13 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { invoke } from "@tauri-apps/api/core"; // ← これだけ追加！
-
-  // ===== 時間帯設定 =====
-  const MORNING_START = 6;      // 朝のチェック開始時刻
-  const MORNING_END = 12;       // 朝のチェック終了時刻
-  const NIGHT_START = 18;       // 夜のチェック開始時刻
-  const NIGHT_END = 1;          // 夜のチェック終了時刻（25時 = 翌日1時）
-  const DATE_RESET_HOUR = 4;    // 日付変更時刻
+  import { invoke } from "@tauri-apps/api/core";
+  import { MORNING_START, MORNING_END, NIGHT_START, NIGHT_END, DATE_RESET_HOUR } from "$lib/constants";
 
   let morningChecked = $state(false);
   let nightChecked = $state(false);
