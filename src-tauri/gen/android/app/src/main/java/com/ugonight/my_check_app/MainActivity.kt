@@ -7,5 +7,8 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+
+    // WorkManager開始
+    WorkScheduler.schedule(this)
   }
 }
