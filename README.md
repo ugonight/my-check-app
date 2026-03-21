@@ -108,3 +108,8 @@ bun run check:watch
 ## License
 
 MIT
+
+## Screen Shots
+
+![](screenshots/51168_0.jpg)
+![](screenshots/51169_0.jpg)
