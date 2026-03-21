@@ -72,10 +72,41 @@ async fn insert_check(check_type: i32) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Constants {
+    pub key: String,
+    pub value: String,
+    pub description: Option<String>,
+}
+
+#[command]
+async fn get_constants() -> Result<Vec<Constants>, String> {
+    let client = create_authenticated_client()?;
+
+    let resp = client
+        .from("constants")
+        .select("*")
+        .execute()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let body = resp.text().await.map_err(|e| e.to_string())?;
+    let settings: Vec<Constants> =
+        serde_json::from_str(&body).map_err(|e| format!("JSONパース失敗: {}", e))?;
+
+    println!("Fetched constants: {:?}", settings);
+
+    Ok(settings)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_recent_checks, insert_check])
+        .invoke_handler(tauri::generate_handler![
+            get_recent_checks,
+            insert_check,
+            get_constants
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

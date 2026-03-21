@@ -1,13 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
-  import {
-    MORNING_START,
-    MORNING_END,
-    NIGHT_START,
-    NIGHT_END,
-    DATE_RESET_HOUR,
-  } from "$lib/constants";
+  import { constants } from "$lib/stores/constants";
 
   let allChecks: { type: number; time: string }[] = $state([]);
   let weekData: { date: Date; hasMorning: boolean; hasNight: boolean }[] =
@@ -17,7 +11,7 @@
   // 日付変更時刻を基準に日付を計算
   function getAdjustedDate(date: Date): Date {
     const adjusted = new Date(date);
-    if (adjusted.getHours() < DATE_RESET_HOUR) {
+    if (adjusted.getHours() < parseInt($constants.DATE_RESET_HOUR)) {
       adjusted.setDate(adjusted.getDate() - 1);
     }
     return adjusted;
@@ -92,18 +86,18 @@
   }
 
   function getTimeDisplay(start: number, end: number): string {
-    if(start > end) {
+    if (start > end) {
       end += 24;
     }
-    return `${start}:00～${end}:00`;    
+    return `${start}:00～${end}:00`;
   }
 
   function getMorningTimeDisplay(): string {
-    return getTimeDisplay(MORNING_START, MORNING_END);
+    return getTimeDisplay(parseInt($constants.MORNING_START), parseInt($constants.MORNING_END));
   }
 
   function getNightTimeDisplay(): string {
-    return getTimeDisplay(NIGHT_START, NIGHT_END);
+    return getTimeDisplay(parseInt($constants.NIGHT_START), parseInt($constants.NIGHT_END));
   }
 
   function isToday(date: Date): boolean {
