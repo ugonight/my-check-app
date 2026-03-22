@@ -3,19 +3,22 @@ package com.ugonight.my_check_app
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import androidx.work.CoroutineWorker
-import kotlinx.serialization.json.Json
 
 class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        Log.d("MyActivity", "Worker started at ${LocalDateTime.now()}")
+
         return try {
             val constants = fetchConstants()
             val now = LocalDateTime.now()
@@ -29,9 +32,11 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                         isNight -> 1
                         else -> null
                     }
+            Log.d("MyActivity", "targetType: $targetType")
 
             if (targetType != null) {
                 val isChecked = fetchCheck(targetType)
+                Log.d("MyActivity", "isChecked: $isChecked")
 
                 if (!isChecked) {
                     val message =
@@ -49,6 +54,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 
             Result.success()
         } catch (e: Exception) {
+            Log.e("MyActivity", "Worker error", e)
             Result.retry()
         }
     }
@@ -79,7 +85,9 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                     }
                     response.body?.string() ?: "[]"
                 }
-        val list = Json.decodeFromString<List<Constant>>(body)
+        Log.d("MyActivity", "fetchConstants: $body")
+        val json = Json { ignoreUnknownKeys = true }
+        val list = json.decodeFromString<List<Constant>>(body)
         return list.associate { it.key to it.value.toInt() }
     }
 
@@ -148,6 +156,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         val manager =
                 applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as
                         NotificationManager
+        val enabled = manager.areNotificationsEnabled()
+        Log.d("MyActivity", "notifications enabled = $enabled")
 
         val channelId = "check_channel"
 
