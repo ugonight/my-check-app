@@ -93,11 +93,17 @@
   }
 
   function getMorningTimeDisplay(): string {
-    return getTimeDisplay(parseInt($constants.MORNING_START), parseInt($constants.MORNING_END));
+    return getTimeDisplay(
+      parseInt($constants.MORNING_START),
+      parseInt($constants.MORNING_END),
+    );
   }
 
   function getNightTimeDisplay(): string {
-    return getTimeDisplay(parseInt($constants.NIGHT_START), parseInt($constants.NIGHT_END));
+    return getTimeDisplay(
+      parseInt($constants.NIGHT_START),
+      parseInt($constants.NIGHT_END),
+    );
   }
 
   function isToday(date: Date): boolean {
@@ -110,17 +116,20 @@
   }
 </script>
 
-<div class="absolute top-8 left-3 sm:top-8 sm:left-5">
-  <a
-    href="/"
-    class="px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
-  >
-    ← 今日
-  </a>
+<div class="sticky top-0 left-0 z-20 w-full bg-white dark:bg-neutral-900">
+  <div class="absolute top-8 left-3 sm:top-8 sm:left-5 z-10">
+    <a
+      href="/"
+      class="px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+    >
+      ← 今日
+    </a>
+  </div>
+
+  <h1 class="pt-16 text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8">
+    週間チェック状況
+  </h1>
 </div>
-<h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8">
-  週間チェック状況
-</h1>
 
 {#if loading}
   <p class="text-neutral-500 dark:text-neutral-400">読み込み中...</p>
