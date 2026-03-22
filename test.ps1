@@ -11,4 +11,5 @@ $tz = "%2B09:00"
 
 $url = "https://kxlqfoansbiymasmhvie.supabase.co/rest/v1/daily_checks?time=gte.${todayJST}T00:00:00$tz&time=lt.${tomorrowJST}T00:00:00$tz"
 
-Invoke-WebRequest -Uri $url -Headers $headers
+# $url = "https://kxlqfoansbiymasmhvie.supabase.co/rest/v1/constants"
+(Invoke-WebRequest -Uri $url -Headers $headers).Content
