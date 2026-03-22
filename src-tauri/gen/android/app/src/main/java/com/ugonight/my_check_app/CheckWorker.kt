@@ -4,18 +4,18 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationCompat
-import androidx.work.Worker
 import androidx.work.WorkerParameters
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import androidx.work.CoroutineWorker
+import kotlinx.serialization.json.Json
 
-class CheckWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
-    override fun doWork(): Result {
+class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
         return try {
             val constants = fetchConstants()
             val now = LocalDateTime.now()
@@ -44,6 +44,9 @@ class CheckWorker(context: Context, params: WorkerParameters) : Worker(context, 
                 }
             }
 
+            val delay = calculateNextDelay(now, constants)
+            WorkScheduler.scheduleNext(applicationContext, delay)
+
             Result.success()
         } catch (e: Exception) {
             Result.retry()
@@ -54,6 +57,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : Worker(context, 
     // Supabase constants の取得
     // -----------------------------
     @Serializable data class Constant(val key: String, val value: String)
+
+    private val client = OkHttpClient()
 
     private fun fetchConstants(): Map<String, Int> {
         val baseUrl = EnvLoader.url(applicationContext)
@@ -67,12 +72,14 @@ class CheckWorker(context: Context, params: WorkerParameters) : Worker(context, 
                         .addHeader("apikey", key)
                         .addHeader("Authorization", "Bearer $key")
                         .build()
-
-        val response = OkHttpClient().newCall(request).execute()
-        val body = response.body?.string() ?: "[]"
-
+        val body =
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw Exception("HTTP error: ${response.code}")
+                    }
+                    response.body?.string() ?: "[]"
+                }
         val list = Json.decodeFromString<List<Constant>>(body)
-
         return list.associate { it.key to it.value.toInt() }
     }
 
@@ -123,8 +130,13 @@ class CheckWorker(context: Context, params: WorkerParameters) : Worker(context, 
                         .addHeader("Authorization", "Bearer $key")
                         .build()
 
-        val response = OkHttpClient().newCall(request).execute()
-        val body = response.body?.string()
+        val body =
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw Exception("HTTP error: ${response.code}")
+                    }
+                    response.body?.string() ?: "[]"
+                }
 
         return body != "[]"
     }
@@ -141,7 +153,9 @@ class CheckWorker(context: Context, params: WorkerParameters) : Worker(context, 
 
         val channel =
                 NotificationChannel(channelId, "チェック通知", NotificationManager.IMPORTANCE_DEFAULT)
-        manager.createNotificationChannel(channel)
+        if (manager.getNotificationChannel(channelId) == null) {
+            manager.createNotificationChannel(channel)
+        }
 
         val notification =
                 NotificationCompat.Builder(applicationContext, channelId)
@@ -151,5 +165,20 @@ class CheckWorker(context: Context, params: WorkerParameters) : Worker(context, 
                         .build()
 
         manager.notify(1, notification)
+    }
+
+    private fun calculateNextDelay(now: LocalDateTime, c: Map<String, Int>): Long {
+        val morning = c["MORNING_NOTIFY"] ?: 9
+        val night = c["NIGHT_NOTIFY"] ?: 21
+
+        val todayMorning = now.withHour(morning).withMinute(0).withSecond(0)
+        val todayNight = now.withHour(night).withMinute(0).withSecond(0)
+
+        val candidates =
+                listOf(todayMorning, todayNight).map { if (it.isAfter(now)) it else it.plusDays(1) }
+
+        val next = candidates.minBy { Duration.between(now, it).toMillis() }
+
+        return Duration.between(now, next).toMillis()
     }
 }
