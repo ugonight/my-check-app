@@ -4,8 +4,13 @@
   import { constants } from "$lib/stores/constants";
 
   let allChecks: { type: number; time: string }[] = $state([]);
-  let weekData: { date: Date; hasMorning: boolean; hasNight: boolean }[] =
-    $state([]);
+  let weekData: {
+    date: Date;
+    hasMorning: boolean;
+    hasNight: boolean;
+    timeMorning: string | null;
+    timeNight: string | null;
+  }[] = $state([]);
   let loading = $state(true);
 
   // 日付変更時刻を基準に日付を計算
@@ -21,6 +26,8 @@
   function getChecksForDate(date: Date): {
     hasMorning: boolean;
     hasNight: boolean;
+    timeMorning: string | null;
+    timeNight: string | null;
   } {
     const dayChecks = allChecks.filter((c) => {
       const checkDate = getAdjustedDate(new Date(c.time));
@@ -34,6 +41,8 @@
     return {
       hasMorning: dayChecks.some((c) => c.type === 0),
       hasNight: dayChecks.some((c) => c.type === 1),
+      timeMorning: dayChecks.find((c) => c.type === 0)?.time || null,
+      timeNight: dayChecks.find((c) => c.type === 1)?.time || null,
     };
   }
 
@@ -57,6 +66,8 @@
         date,
         hasMorning: checks.hasMorning,
         hasNight: checks.hasNight,
+        timeMorning: checks.timeMorning,
+        timeNight: checks.timeNight,
       });
     }
 
@@ -85,25 +96,13 @@
     });
   }
 
-  function getTimeDisplay(start: number, end: number): string {
-    if (start > end) {
-      end += 24;
-    }
-    return `${start}:00～${end}:00`;
-  }
-
-  function getMorningTimeDisplay(): string {
-    return getTimeDisplay(
-      parseInt($constants.MORNING_START),
-      parseInt($constants.MORNING_END),
-    );
-  }
-
-  function getNightTimeDisplay(): string {
-    return getTimeDisplay(
-      parseInt($constants.NIGHT_START),
-      parseInt($constants.NIGHT_END),
-    );
+  function getTimeDisplay(time: string | null): string {
+    if (!time) return "";
+    const date = new Date(time);
+    return date.toLocaleTimeString("ja-JP", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   function isToday(date: Date): boolean {
@@ -177,9 +176,15 @@
           class="text-xs text-neutral-500 dark:text-neutral-400 mt-2 text-left"
         >
           <p>
-            朝: {day.hasMorning ? `${getMorningTimeDisplay()} 完了` : "未実施"}
+            朝: {day.hasMorning
+              ? `${getTimeDisplay(day.timeMorning)} 完了`
+              : "未実施"}
           </p>
-          <p>夜: {day.hasNight ? `${getNightTimeDisplay()} 完了` : "未実施"}</p>
+          <p>
+            夜: {day.hasNight
+              ? `${getTimeDisplay(day.timeNight)} 完了`
+              : "未実施"}
+          </p>
         </div>
       </div>
     {/each}

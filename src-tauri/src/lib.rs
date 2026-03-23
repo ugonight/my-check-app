@@ -94,8 +94,6 @@ async fn get_constants() -> Result<Vec<Constants>, String> {
     let settings: Vec<Constants> =
         serde_json::from_str(&body).map_err(|e| format!("JSONパース失敗: {}", e))?;
 
-    println!("Fetched constants: {:?}", settings);
-
     Ok(settings)
 }
 
