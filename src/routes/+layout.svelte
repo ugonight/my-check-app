@@ -28,7 +28,7 @@
 	});
 </script>
 
-<div class="px-3 py-8 sm:p-5 md:p-8 text-center w-screen min-h-screen flex flex-col items-center justify-center bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50 transition-colors">
+<div class="text-center w-screen min-h-screen flex flex-col items-center justify-center bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50 transition-colors">
 	{@render children()}
 </div>
 

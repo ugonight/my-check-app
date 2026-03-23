@@ -1,13 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
-  import {
-    MORNING_START,
-    MORNING_END,
-    NIGHT_START,
-    NIGHT_END,
-    DATE_RESET_HOUR,
-  } from "$lib/constants";
+  import { constants } from "$lib/stores/constants";
 
   let allChecks: { type: number; time: string }[] = $state([]);
   let weekData: { date: Date; hasMorning: boolean; hasNight: boolean }[] =
@@ -17,7 +11,7 @@
   // 日付変更時刻を基準に日付を計算
   function getAdjustedDate(date: Date): Date {
     const adjusted = new Date(date);
-    if (adjusted.getHours() < DATE_RESET_HOUR) {
+    if (adjusted.getHours() < parseInt($constants.DATE_RESET_HOUR)) {
       adjusted.setDate(adjusted.getDate() - 1);
     }
     return adjusted;
@@ -92,18 +86,24 @@
   }
 
   function getTimeDisplay(start: number, end: number): string {
-    if(start > end) {
+    if (start > end) {
       end += 24;
     }
-    return `${start}:00～${end}:00`;    
+    return `${start}:00～${end}:00`;
   }
 
   function getMorningTimeDisplay(): string {
-    return getTimeDisplay(MORNING_START, MORNING_END);
+    return getTimeDisplay(
+      parseInt($constants.MORNING_START),
+      parseInt($constants.MORNING_END),
+    );
   }
 
   function getNightTimeDisplay(): string {
-    return getTimeDisplay(NIGHT_START, NIGHT_END);
+    return getTimeDisplay(
+      parseInt($constants.NIGHT_START),
+      parseInt($constants.NIGHT_END),
+    );
   }
 
   function isToday(date: Date): boolean {
@@ -116,17 +116,20 @@
   }
 </script>
 
-<div class="absolute top-8 left-3 sm:top-8 sm:left-5">
-  <a
-    href="/"
-    class="px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
-  >
-    ← 今日
-  </a>
+<div class="sticky top-0 left-0 z-20 w-full bg-white dark:bg-neutral-900">
+  <div class="absolute top-8 left-3 sm:top-8 sm:left-5 z-10">
+    <a
+      href="/"
+      class="px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+    >
+      ← 今日
+    </a>
+  </div>
+
+  <h1 class="pt-16 text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8">
+    週間チェック状況
+  </h1>
 </div>
-<h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8">
-  週間チェック状況
-</h1>
 
 {#if loading}
   <p class="text-neutral-500 dark:text-neutral-400">読み込み中...</p>
