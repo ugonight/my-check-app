@@ -1,6 +1,6 @@
 import { writable, derived } from 'svelte/store';
-import { supabaseClient } from './supabase';
-import type { AuthUser, Session } from './types';
+import { supabaseClient } from '../supabase';
+import type { AuthUser, Session } from '../types';
 import { invoke } from '@tauri-apps/api/core';
 
 // 認証状態

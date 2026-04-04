@@ -70,7 +70,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         val baseUrl = EnvLoader.url(applicationContext)
         val key = EnvLoader.key(applicationContext)
 
-        val url = "$baseUrl/constants"
+        val url = "$baseUrl/rest/v1/constants"
 
         val request =
                 Request.Builder()
@@ -126,7 +126,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         val tz = "%2B09:00"
 
         val url =
-                "$baseUrl/daily_checks" +
+                "$baseUrl/rest/v1/daily_checks" +
                         "?time=gte.${today}T00:00:00$tz" +
                         "&time=lt.${tomorrow}T00:00:00$tz" +
                         "&type=eq.$type"

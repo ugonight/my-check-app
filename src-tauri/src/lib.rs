@@ -7,7 +7,9 @@ mod auth;
 use auth::{extract_user_id, verify_jwt};
 
 fn get_supabase_url() -> String {
-    env!("SUPABASE_URL").to_string()
+    // .env の SUPABASE_URL を取得し、/rest/v1 を追加
+    let base_url = env!("SUPABASE_URL").to_string();
+    format!("{}/rest/v1", base_url)
 }
 
 fn get_supabase_key() -> String {
@@ -37,7 +39,7 @@ fn create_authenticated_client() -> Result<Postgrest, String> {
 }
 
 // JWT トークンを使用する認証クライアント
-fn create_authenticated_client_with_token(token: &str) -> Result<Postgrest, String> {
+async fn create_authenticated_client_with_token(token: &str) -> Result<Postgrest, String> {
     let supabase_url = get_supabase_url();
     let supabase_key = get_supabase_key();
 
@@ -46,7 +48,7 @@ fn create_authenticated_client_with_token(token: &str) -> Result<Postgrest, Stri
     }
 
     // JWT トークン検証
-    let user_id = extract_user_id(token)?;
+    let _user_id = verify_jwt(token).await?;
 
     Ok(Postgrest::new(&supabase_url)
         .insert_header("apikey", &supabase_key)
@@ -56,7 +58,7 @@ fn create_authenticated_client_with_token(token: &str) -> Result<Postgrest, Stri
 // 直近30件取得（トークン必須）
 #[command]
 async fn get_recent_checks(token: String) -> Result<Vec<DailyCheck>, String> {
-    let client = create_authenticated_client_with_token(&token)?;
+    let client = create_authenticated_client_with_token(&token).await?;
 
     let resp = client
         .from("daily_checks")
@@ -82,9 +84,9 @@ async fn insert_check(token: String, check_type: i32) -> Result<(), String> {
     }
 
     // JWT トークン検証と user_id 抽出
-    let user_id = extract_user_id(&token)?;
+    let user_id = verify_jwt(&token).await?;
 
-    let client = create_authenticated_client_with_token(&token)?;
+    let client = create_authenticated_client_with_token(&token).await?;
     let payload = serde_json::json!({
         "user_id": user_id,
         "type": check_type
