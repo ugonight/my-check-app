@@ -2,6 +2,8 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { constants } from "$lib/stores/constants";
+  import { isAuthenticated, getAccessToken } from "$lib/stores/auth";
+  import { goto } from "$app/navigation";
 
   let allChecks: { type: number; time: string }[] = $state([]);
   let weekData: {
@@ -75,9 +77,21 @@
   }
 
   onMount(async () => {
+    // 認証チェック
+    if (!$isAuthenticated) {
+      goto("/auth/login");
+      return;
+    }
+
     try {
+      const token = await getAccessToken();
+      if (!token) {
+        goto("/auth/login");
+        return;
+      }
+
       const checks =
-        await invoke<{ type: number; time: string }[]>("get_recent_checks");
+        await invoke<{ type: number; time: string }[]>("get_recent_checks", { token });
       allChecks = checks;
       generateWeekData();
     } catch (e) {

@@ -11,10 +11,16 @@ fn main() {
         .expect("SUPABASE_URL environment variable is not set. Please set it in .env file or system environment.");
     let supabase_key = std::env::var("SUPABASE_KEY")
         .expect("SUPABASE_KEY environment variable is not set. Please set it in .env file or system environment.");
+    let supabase_jwt_secret = std::env::var("SUPABASE_JWT_SECRET")
+        .expect("SUPABASE_JWT_SECRET environment variable is not set. Please set it in .env file or system environment.");
 
     // コンパイル時にこれらの値がバイナリに埋め込まれる
     println!("cargo:rustc-env=SUPABASE_URL={}", supabase_url);
     println!("cargo:rustc-env=SUPABASE_KEY={}", supabase_key);
+    println!(
+        "cargo:rustc-env=SUPABASE_JWT_SECRET={}",
+        supabase_jwt_secret
+    );
 
     // Android向けにenv.jsonも生成
     if fs::exists("gen/android/app/src/main/assets/").unwrap_or(false) {

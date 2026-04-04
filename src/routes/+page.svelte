@@ -2,6 +2,8 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { constants, loadConstants } from "$lib/stores/constants";
+  import { isAuthenticated, getAccessToken } from "$lib/stores/auth";
+  import { goto } from "$app/navigation";
 
   let morningChecked = $state(false);
   let nightChecked = $state(false);
@@ -60,9 +62,21 @@
   }
 
   onMount(async () => {
+    // 認証チェック
+    if (!$isAuthenticated) {
+      goto("/auth/login");
+      return;
+    }
+
     try {
+      const token = await getAccessToken();
+      if (!token) {
+        goto("/auth/login");
+        return;
+      }
+
       const checks =
-        await invoke<{ type: number; time: string }[]>("get_recent_checks");
+        await invoke<{ type: number; time: string }[]>("get_recent_checks", { token });
       todayChecks = checks.filter((c) => isToday(c.time));
       morningChecked = todayChecks.some((c) => c.type === 0);
       nightChecked = todayChecks.some((c) => c.type === 1);
@@ -82,7 +96,13 @@
       return;
     }
     try {
-      await invoke("insert_check", { checkType: type });
+      const token = await getAccessToken();
+      if (!token) {
+        goto("/auth/login");
+        return;
+      }
+
+      await invoke("insert_check", { token, checkType: type });
       if (type === 0) morningChecked = true;
       else nightChecked = true;
     } catch (e) {
