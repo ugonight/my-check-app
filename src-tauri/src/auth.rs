@@ -1,8 +1,7 @@
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use std::sync::Mutex;
-use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
@@ -59,12 +58,12 @@ async fn fetch_jwks() -> Result<JWKS, String> {
     let url = get_supabase_jwks_url();
     let response = reqwest::get(&url)
         .await
-        .map_err(|e| format!("JWKS取得失敗: {}", e))?;
+        .map_err(|e| format!("JWKS取得失敗: {e}"))?;
 
     let jwks: JWKS = response
         .json()
         .await
-        .map_err(|e| format!("JWKS解析失敗: {}", e))?;
+        .map_err(|e| format!("JWKS解析失敗: {e}"))?;
 
     // キャッシュへ保存
     if let Ok(mut cache) = JWKS_CACHE.lock() {
@@ -77,12 +76,14 @@ async fn fetch_jwks() -> Result<JWKS, String> {
 /// JWK から ES256 用の DecodingKey を構築
 fn jwk_to_decoding_key(jwk: &JWK) -> Result<DecodingKey, String> {
     if jwk.kty != "EC" || jwk.crv != "P-256" {
-        return Err(format!("サポートされていない鍵タイプ: {} {}", jwk.kty, jwk.crv));
+        return Err(format!(
+            "サポートされていない鍵タイプ: {} {}",
+            jwk.kty, jwk.crv
+        ));
     }
 
     // ES256 用の DecodingKey を構築（x と y座標を渡す）
-    DecodingKey::from_ec_components(&jwk.x, &jwk.y)
-        .map_err(|e| format!("DecodingKey構築失敗: {}", e))
+    DecodingKey::from_ec_components(&jwk.x, &jwk.y).map_err(|e| format!("DecodingKey構築失敗: {e}"))
 }
 
 /// JWT トークンを検証し、user_id を抽出する
@@ -95,8 +96,7 @@ pub async fn verify_jwt(token: &str) -> Result<String, String> {
     };
 
     // トークンヘッダから kid を取得
-    let header = decode_header(token)
-        .map_err(|e| format!("ヘッダ解析失敗: {}", e))?;
+    let header = decode_header(token).map_err(|e| format!("ヘッダ解析失敗: {e}"))?;
 
     let kid = header
         .kid
@@ -120,7 +120,7 @@ pub async fn verify_jwt(token: &str) -> Result<String, String> {
     validation.set_audience(&["authenticated"]);
 
     let token_data = decode::<Claims>(token, &decoding_key, &validation)
-        .map_err(|e| format!("JWT検証失敗: {}", e))?;
+        .map_err(|e| format!("JWT検証失敗: {e}"))?;
 
     let claims = token_data.claims;
 
@@ -148,7 +148,6 @@ pub async fn extract_user_id(token: &str) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_bearer_scheme() {

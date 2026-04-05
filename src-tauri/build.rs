@@ -15,21 +15,19 @@ fn main() {
         .expect("SUPABASE_JWT_SECRET environment variable is not set. Please set it in .env file or system environment.");
 
     // コンパイル時にこれらの値がバイナリに埋め込まれる
-    println!("cargo:rustc-env=SUPABASE_URL={}", supabase_url);
-    println!("cargo:rustc-env=SUPABASE_KEY={}", supabase_key);
+    println!("cargo:rustc-env=SUPABASE_URL={supabase_url}");
+    println!("cargo:rustc-env=SUPABASE_KEY={supabase_key}");
     println!(
-        "cargo:rustc-env=SUPABASE_JWT_SECRET={}",
-        supabase_jwt_secret
+        "cargo:rustc-env=SUPABASE_JWT_SECRET={supabase_jwt_secret}"
     );
 
     // Android向けにenv.jsonも生成
     if fs::exists("gen/android/app/src/main/assets/").unwrap_or(false) {
         let content = format!(
             r#"{{
-  "SUPABASE_URL": "{}",
-  "SUPABASE_KEY": "{}"
-}}"#,
-            supabase_url, supabase_key
+  "SUPABASE_URL": "{supabase_url}",
+  "SUPABASE_KEY": "{supabase_key}"
+}}"#
         );
 
         fs::write("gen/android/app/src/main/assets/env.json", content)

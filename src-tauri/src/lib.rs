@@ -1,15 +1,14 @@
 use postgrest::Postgrest;
 use serde::{Deserialize, Serialize};
 use tauri::command;
-use uuid::Uuid;
 
 mod auth;
-use auth::{extract_user_id, verify_jwt};
+use auth::verify_jwt;
 
 fn get_supabase_url() -> String {
     // .env の SUPABASE_URL を取得し、/rest/v1 を追加
     let base_url = env!("SUPABASE_URL").to_string();
-    format!("{}/rest/v1", base_url)
+    format!("{base_url}/rest/v1")
 }
 
 fn get_supabase_key() -> String {
@@ -35,7 +34,7 @@ fn create_authenticated_client() -> Result<Postgrest, String> {
 
     Ok(Postgrest::new(&supabase_url)
         .insert_header("apikey", &supabase_key)
-        .insert_header("Authorization", format!("Bearer {}", supabase_key)))
+        .insert_header("Authorization", format!("Bearer {supabase_key}")))
 }
 
 // JWT トークンを使用する認証クライアント
@@ -52,7 +51,7 @@ async fn create_authenticated_client_with_token(token: &str) -> Result<Postgrest
 
     Ok(Postgrest::new(&supabase_url)
         .insert_header("apikey", &supabase_key)
-        .insert_header("Authorization", format!("Bearer {}", token)))
+        .insert_header("Authorization", format!("Bearer {token}")))
 }
 
 // 直近30件取得（トークン必須）
@@ -71,7 +70,7 @@ async fn get_recent_checks(token: String) -> Result<Vec<DailyCheck>, String> {
 
     let body = resp.text().await.map_err(|e| e.to_string())?;
     let checks: Vec<DailyCheck> =
-        serde_json::from_str(&body).map_err(|e| format!("JSONパース失敗: {}", e))?;
+        serde_json::from_str(&body).map_err(|e| format!("JSONパース失敗: {e}"))?;
 
     Ok(checks)
 }
@@ -122,7 +121,7 @@ async fn get_constants() -> Result<Vec<Constants>, String> {
 
     let body = resp.text().await.map_err(|e| e.to_string())?;
     let settings: Vec<Constants> =
-        serde_json::from_str(&body).map_err(|e| format!("JSONパース失敗: {}", e))?;
+        serde_json::from_str(&body).map_err(|e| format!("JSONパース失敗: {e}"))?;
 
     Ok(settings)
 }
