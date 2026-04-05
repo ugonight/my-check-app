@@ -77,7 +77,7 @@
           <p
             class="text-sm font-medium text-neutral-900 dark:text-neutral-50 break-all"
           >
-            {$authUser.email}
+            {$authUser.user_metadata?.name}
           </p>
         </div>
 
