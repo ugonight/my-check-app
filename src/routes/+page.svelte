@@ -54,11 +54,17 @@
   }
 
   function getMorningTimeDisplay(): string {
-    return getTimeDisplay(parseInt($constants.MORNING_START), parseInt($constants.MORNING_END));
+    return getTimeDisplay(
+      parseInt($constants.MORNING_START),
+      parseInt($constants.MORNING_END),
+    );
   }
 
   function getNightTimeDisplay(): string {
-    return getTimeDisplay(parseInt($constants.NIGHT_START), parseInt($constants.NIGHT_END));
+    return getTimeDisplay(
+      parseInt($constants.NIGHT_START),
+      parseInt($constants.NIGHT_END),
+    );
   }
 
   onMount(async () => {
@@ -75,8 +81,10 @@
         return;
       }
 
-      const checks =
-        await invoke<{ type: number; time: string }[]>("get_recent_checks", { token });
+      const checks = await invoke<{ type: number; time: string }[]>(
+        "get_recent_checks",
+        { token },
+      );
       todayChecks = checks.filter((c) => isToday(c.time));
       morningChecked = todayChecks.some((c) => c.type === 0);
       nightChecked = todayChecks.some((c) => c.type === 1);
@@ -119,7 +127,7 @@
     週間表示
   </a>
 </div>
-<h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 md:mb-6">
+<h1 class="pt-16 text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 md:mb-6">
   今日のチェック
 </h1>
 <p
@@ -128,29 +136,31 @@
   {today.toLocaleDateString("ja-JP")}
 </p>
 
-<div class="space-y-3 sm:space-y-4 w-full sm:w-auto max-w-xs">
-  <div>
-    <button
-      onclick={() => checkIn(0)}
-      disabled={morningChecked || !isInMorningWindow()}
-      class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
-    >
-      {morningChecked ? "朝チェック済み ✓" : "朝のチェック"}
-    </button>
-    <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
-      {getMorningTimeDisplay()}に押せます
-    </p>
-  </div>
-  <div>
-    <button
-      onclick={() => checkIn(1)}
-      disabled={nightChecked || !isInNightWindow()}
-      class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
-    >
-      {nightChecked ? "夜チェック済み ✓" : "夜のチェック"}
-    </button>
-    <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
-      {getNightTimeDisplay()}に押せます
-    </p>
+<div class="flex justify-center">
+  <div class="space-y-3 sm:space-y-4 w-full sm:w-auto max-w-xs">
+    <div>
+      <button
+        onclick={() => checkIn(0)}
+        disabled={morningChecked || !isInMorningWindow()}
+        class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
+      >
+        {morningChecked ? "朝チェック済み ✓" : "朝のチェック"}
+      </button>
+      <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
+        {getMorningTimeDisplay()}に押せます
+      </p>
+    </div>
+    <div>
+      <button
+        onclick={() => checkIn(1)}
+        disabled={nightChecked || !isInNightWindow()}
+        class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
+      >
+        {nightChecked ? "夜チェック済み ✓" : "夜のチェック"}
+      </button>
+      <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
+        {getNightTimeDisplay()}に押せます
+      </p>
+    </div>
   </div>
 </div>
