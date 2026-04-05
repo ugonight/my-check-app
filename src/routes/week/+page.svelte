@@ -144,11 +144,11 @@
   </h1>
 </div>
 
-<div class="flex flex-col items-center w-full">
+<div class="flex flex-col items-center w-full px-4 sm:px-0">
   {#if loading}
     <p class="text-neutral-500 dark:text-neutral-400">読み込み中...</p>
   {:else}
-    <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-4 sm:px-0">
+    <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
       {#each weekData as day (day.date.toISOString())}
         <div
           class={`p-4 sm:p-5 rounded-lg border-2 transition-colors ${
@@ -208,7 +208,7 @@
     <!-- 統計情報 -->
     {#if weekData.length > 0}
       <div
-        class="mt-8 sm:mt-10 p-4 sm:p-6 rounded-lg bg-neutral-100 dark:bg-neutral-800 w-full max-w-2xl mx-4 sm:mx-0"
+        class="mt-8 sm:mt-10 p-4 sm:p-6 rounded-lg bg-neutral-100 dark:bg-neutral-800 w-full max-w-2xl"
       >
         <h2 class="font-semibold mb-4 text-lg">この週の統計</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">

@@ -43,7 +43,7 @@
 </script>
 
 <div
-  class="text-center w-screen min-h-screen flex flex-col items-center justify-center bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50 transition-colors relative"
+  class="text-center w-full min-h-screen flex flex-col items-center justify-center bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-50 transition-colors relative"
 >
   <AuthOffcanvas />
 

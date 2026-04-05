@@ -3,19 +3,28 @@
   import { goto } from "$app/navigation";
 
   let isOpen = $state(false);
+  let button: HTMLButtonElement;
+  let panel: HTMLDivElement;
+
+  const LOGIN_ROUTE = "/auth/login";
+
+  const strings = {
+    ACCOUNT: "アカウント",
+    LOGGED_IN: "ログイン中",
+    LOGOUT: "ログアウト",
+    LOGIN: "ログイン",
+  } as const;
 
   const handleLogout = async () => {
     await logout();
     isOpen = false;
-    goto("/auth/login");
+    goto(LOGIN_ROUTE);
   };
 
   const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (
-      target.closest("[data-offcanvas-trigger]") ||
-      target.closest("[data-offcanvas-content]")
-    ) {
+    if (!isOpen) return;
+    const target = e.target as Node;
+    if (panel?.contains(target) || button?.contains(target)) {
       return;
     }
     isOpen = false;
@@ -24,14 +33,12 @@
 
 <svelte:document onclick={handleClickOutside} />
 
-<!-- Account Icon Button - Fixed at bottom-left -->
 <button
-  data-offcanvas-trigger
+  bind:this={button}
   onclick={() => (isOpen = !isOpen)}
   class="fixed bottom-4 left-4 w-12 h-12 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors flex items-center justify-center text-white z-40 shadow-lg"
-  title="アカウント"
+  title={strings.ACCOUNT}
 >
-  <!-- Google Icons "person" -->
   <svg
     xmlns="http://www.w3.org/2000/svg"
     height="24px"
@@ -44,30 +51,28 @@
   >
 </button>
 
-<!-- Offcanvas Overlay -->
 {#if isOpen}
   <div
     class="fixed inset-0 bg-black/30 dark:bg-black/50 z-30 transition-opacity"
   ></div>
 {/if}
 
-<!-- Offcanvas Panel -->
 <div
-  data-offcanvas-content
+  bind:this={panel}
   class={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800 z-40 transition-transform duration-200 ${
     isOpen ? "translate-x-0" : "-translate-x-full"
   }`}
 >
   <div class="p-6">
     <h2 class="text-lg font-bold mb-6 text-neutral-900 dark:text-neutral-50">
-      アカウント
+      {strings.ACCOUNT}
     </h2>
 
     {#if $isAuthenticated && $authUser}
       <div class="space-y-4">
         <div class="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-md">
           <p class="text-xs text-neutral-600 dark:text-neutral-400 mb-1">
-            ログイン中
+            {strings.LOGGED_IN}
           </p>
           <p
             class="text-sm font-medium text-neutral-900 dark:text-neutral-50 break-all"
@@ -80,16 +85,16 @@
           onclick={handleLogout}
           class="w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm font-medium"
         >
-          ログアウト
+          {strings.LOGOUT}
         </button>
       </div>
     {:else}
       <a
-        href="/auth/login"
+        href={LOGIN_ROUTE}
         onclick={() => (isOpen = false)}
         class="w-full block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium text-center"
       >
-        ログイン
+        {strings.LOGIN}
       </a>
     {/if}
   </div>
