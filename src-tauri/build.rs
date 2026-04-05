@@ -17,9 +17,7 @@ fn main() {
     // コンパイル時にこれらの値がバイナリに埋め込まれる
     println!("cargo:rustc-env=SUPABASE_URL={supabase_url}");
     println!("cargo:rustc-env=SUPABASE_KEY={supabase_key}");
-    println!(
-        "cargo:rustc-env=SUPABASE_JWT_SECRET={supabase_jwt_secret}"
-    );
+    println!("cargo:rustc-env=SUPABASE_JWT_SECRET={supabase_jwt_secret}");
 
     // Android向けにenv.jsonも生成
     if fs::exists("gen/android/app/src/main/assets/").unwrap_or(false) {

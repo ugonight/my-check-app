@@ -2,6 +2,7 @@ import { writable, derived } from 'svelte/store';
 import { supabaseClient } from '../supabase';
 import type { AuthUser, Session } from '../types';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 
 // 認証状態
 export const authUser = writable<AuthUser | null>(null);
@@ -59,13 +60,20 @@ export async function signInWithGoogle() {
     const { data, error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo: 'tauri://my-check-app/auth-callback',
+        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
       authError.set(error.message);
       console.error('Google ログインエラー:', error);
+      return;
+    }
+
+    // 外部ブラウザで開く
+    if (data.url) {
+      await openUrl(data.url);
     }
   } catch (err) {
     const message = typeof err === 'string' ? err : (err as Error).message;

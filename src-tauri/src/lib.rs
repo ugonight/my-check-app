@@ -1,6 +1,7 @@
 use postgrest::Postgrest;
 use serde::{Deserialize, Serialize};
 use tauri::command;
+use tauri::Manager;
 
 mod auth;
 use auth::verify_jwt;
@@ -129,6 +130,7 @@ async fn get_constants() -> Result<Vec<Constants>, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_recent_checks,
             insert_check,
