@@ -35,3 +35,6 @@ uuid = { version = "1", features = ["serde", "v4"] }  # UUID型用
 chrono = "0.4"             # 時刻処理用
 reqwest = { version = "0.11", features = ["json", "rustls-tls"], default-features = false }  # HTTP クライアント（JWKS取得）
 tokio = { version = "1", features = ["full"] }  # 非同期ランタイム
+tauri-plugin-deep-link = "2"
+[target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
+tauri-plugin-single-instance = { version = "2.0.0", features = ["deep-link"] }

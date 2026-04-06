@@ -3,11 +3,8 @@
   import { invoke } from "@tauri-apps/api/core";
   import { constants, loadConstants } from "$lib/stores/constants";
   import { isAuthenticated, getAccessToken } from "$lib/stores/auth";
+  import { morningChecked, nightChecked, loadChecks } from "$lib/stores/checks";
   import { goto } from "$app/navigation";
-
-  let morningChecked = $state(false);
-  let nightChecked = $state(false);
-  let todayChecks: { type: number; time: string }[] = $state([]);
 
   const today = new Date();
 
@@ -81,14 +78,10 @@
         return;
       }
 
-      const checks = await invoke<{ type: number; time: string }[]>(
-        "get_recent_checks",
-        { token },
-      );
-      todayChecks = checks.filter((c) => isToday(c.time));
-      morningChecked = todayChecks.some((c) => c.type === 0);
-      nightChecked = todayChecks.some((c) => c.type === 1);
+      // constants がまだ読み込まれていない場合はここで読み込む
       await loadConstants();
+      // チェック状況がまだ読み込まれていない場合はここで読み込む
+      await loadChecks();
     } catch (e) {
       console.error(e);
       alert("データ取得失敗: " + e);
@@ -111,8 +104,8 @@
       }
 
       await invoke("insert_check", { token, checkType: type });
-      if (type === 0) morningChecked = true;
-      else nightChecked = true;
+      if (type === 0) morningChecked.set(true);
+      else nightChecked.set(true);
     } catch (e) {
       alert("保存失敗: " + e);
     }
@@ -141,10 +134,10 @@
     <div>
       <button
         onclick={() => checkIn(0)}
-        disabled={morningChecked || !isInMorningWindow()}
+        disabled={$morningChecked || !isInMorningWindow()}
         class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
       >
-        {morningChecked ? "朝チェック済み ✓" : "朝のチェック"}
+        {$morningChecked ? "朝チェック済み ✓" : "朝のチェック"}
       </button>
       <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
         {getMorningTimeDisplay()}に押せます
@@ -153,10 +146,10 @@
     <div>
       <button
         onclick={() => checkIn(1)}
-        disabled={nightChecked || !isInNightWindow()}
+        disabled={$nightChecked || !isInNightWindow()}
         class="w-full sm:w-48 h-12 sm:h-13 md:h-14 inline-flex items-center justify-center rounded-md bg-neutral-950 dark:bg-neutral-50 px-4 sm:px-6 font-medium text-neutral-50 dark:text-neutral-950 shadow-lg shadow-neutral-500/20 dark:shadow-neutral-950/50 enabled:transition enabled:active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:disabled:bg-neutral-700 disabled:text-neutral-500 dark:disabled:text-neutral-400 text-sm sm:text-base"
       >
-        {nightChecked ? "夜チェック済み ✓" : "夜のチェック"}
+        {$nightChecked ? "夜チェック済み ✓" : "夜のチェック"}
       </button>
       <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
         {getNightTimeDisplay()}に押せます

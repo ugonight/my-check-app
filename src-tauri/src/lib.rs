@@ -129,13 +129,44 @@ async fn get_constants() -> Result<Vec<Constants>, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+          println!("a new app instance was opened with {argv:?} and the deep link event was already triggered");
+
+          // argv から mycheckapp:// スキームのディープリンク URL を探す
+          if let Some(deep_link_uri) = argv.iter().find(|arg| arg.starts_with("mycheckapp://")) {
+            use tauri::Emitter;
+
+            println!("Deep link URI found: {}", deep_link_uri);
+            // フロント側に deep-link-uri イベントで通知
+            let _ = app.emit("deep-link-uri", deep_link_uri);
+          }
+        }));
+    }
+
+    builder = builder
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_recent_checks,
             insert_check,
             get_constants
         ])
+        .setup(|app| {
+            // Deep-link プラグインは protocol registration を自動で行う
+            // フロント側が deep-link イベントをキャッチして処理する
+            #[cfg(any(windows, target_os = "linux"))]
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                app.deep_link().register_all()?;
+            }
+            Ok(())
+        });
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

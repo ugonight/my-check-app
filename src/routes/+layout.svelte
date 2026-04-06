@@ -4,10 +4,18 @@
   import {
     initializeAuth,
     setupAuthListener,
+    setupDeepLinkListener,
+    isAuthenticated,
+    isLoading,
   } from "$lib/stores/auth";
+  import { loadConstants } from "$lib/stores/constants";
+  import { loadChecks } from "$lib/stores/checks";
   import AuthOffcanvas from "$lib/components/AuthOffcanvas.svelte";
+  import { goto } from "$app/navigation";
 
   const { children } = $props();
+
+  let wasLoading = false;
 
   onMount(() => {
     // テーマ設定
@@ -32,12 +40,44 @@
     // 認証初期化
     initializeAuth();
 
+    // 定数読み込み
+    loadConstants();
+
     // セッションリスナー設定
     const unsubscribe = setupAuthListener();
+
+    // Deep-link イベントリスナー設定
+    let unlistenDeepLink: (() => void) | null = null;
+    setupDeepLinkListener().then((unlisten) => {
+      unlistenDeepLink = unlisten;
+    });
+
+    // Deep-link による認証完了時の自動遷移
+    let unsubscribeAuth: (() => void) | null = null;
+    let unsubscribeCheckAuth: (() => void) | null = null;
+
+    unsubscribeAuth = isLoading.subscribe((loading) => {
+      if (wasLoading && !loading) {
+        // ローディング終了時に認証状態を確認
+        unsubscribeCheckAuth = isAuthenticated.subscribe((authenticated) => {
+          if (authenticated) {
+            // チェック状況を読み込む
+            loadChecks();
+            goto("/");
+          }
+          // 1回実行したらアンサブスクライブ
+          unsubscribeCheckAuth?.();
+        });
+      }
+      wasLoading = loading;
+    });
 
     return () => {
       mediaQuery.removeEventListener("change", handleChange);
       unsubscribe();
+      unlistenDeepLink?.();
+      unsubscribeAuth?.();
+      unsubscribeCheckAuth?.();
     };
   });
 </script>

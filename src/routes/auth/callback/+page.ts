@@ -3,6 +3,8 @@ import { supabaseClient } from '$lib/supabase';
 
 export async function load() {
   // フラグメント（#access_token=...）から手動セッション確立
+  // Deep-link イベント経由でセッション確立される場合もありますが、
+  // このページが読み込まれた場合のフォールバック処理として機能します
   const hash = typeof window !== 'undefined' ? window.location.hash : '';
 
   if (hash.includes('access_token')) {
@@ -22,7 +24,7 @@ export async function load() {
         return;
       }
 
-      console.log('セッション確立成功');
+      console.log('セッション確立成功（フラグメント処理）');
       goto('/');
       return;
     }
