@@ -120,45 +120,63 @@ export async function logout() {
 export async function setupDeepLinkListener() {
   const unlisteners: (() => void)[] = [];
 
-  try {
-    // single-instance プラグイン経由の deep-link イベント（Windows）
-    const unlistenDeepLinkUri = await listen<string>('deep-link-uri', async (event) => {
-      console.log('Deep link URI received:', event.payload);
+  const processDeepLink = async (uri: string) => {
+    console.log('Processing deep link:', uri);
 
-      // URI の形式：mycheckapp://my-check-app/auth-callback#access_token=...&refresh_token=...
-      const uri = event.payload;
-      const hashIndex = uri.indexOf('#');
-      if (hashIndex > -1) {
-        const hashParams = new URLSearchParams(uri.substring(hashIndex + 1));
-        const access_token = hashParams.get('access_token');
-        const refresh_token = hashParams.get('refresh_token');
+    // URI の形式：mycheckapp://my-check-app/auth-callback#access_token=...&refresh_token=...
+    const hashIndex = uri.indexOf('#');
+    if (hashIndex > -1) {
+      const hashParams = new URLSearchParams(uri.substring(hashIndex + 1));
+      const access_token = hashParams.get('access_token');
+      const refresh_token = hashParams.get('refresh_token');
 
-        if (access_token && refresh_token) {
-          isLoading.set(true);
-          authError.set(null);
+      if (access_token && refresh_token) {
+        isLoading.set(true);
+        authError.set(null);
 
-          try {
-            const { error } = await supabaseClient.auth.setSession({
-              access_token,
-              refresh_token,
-            });
+        try {
+          const { error } = await supabaseClient.auth.setSession({
+            access_token,
+            refresh_token,
+          });
 
-            if (error) {
-              console.error('セッション設定エラー:', error);
-              authError.set(error.message);
-              return;
-            }
-
-            console.log('セッション確立成功（Deep-link URI経由）');
-          } catch (err) {
-            const message = typeof err === 'string' ? err : (err as Error).message;
-            authError.set(message || 'セッション確立に失敗しました');
-            console.error('セッション確立例外:', err);
-          } finally {
-            isLoading.set(false);
+          if (error) {
+            console.error('セッション設定エラー:', error);
+            authError.set(error.message);
+            return;
           }
+
+          console.log('セッション確立成功（Deep-link経由）');
+        } catch (err) {
+          const message = typeof err === 'string' ? err : (err as Error).message;
+          authError.set(message || 'セッション確立に失敗しました');
+          console.error('セッション確立例外:', err);
+        } finally {
+          isLoading.set(false);
         }
       }
+    }
+  };
+
+  try {
+    // window.location から fragment を読み取る（フォールバック）
+    console.log('Current location:', window.location.href);
+    if (window.location.hash) {
+      console.log('Fragment found in window.location:', window.location.hash);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const access_token = hashParams.get('access_token');
+      const refresh_token = hashParams.get('refresh_token');
+
+      if (access_token && refresh_token) {
+        console.log('Tokens found in window.location, setting session...');
+        await processDeepLink(window.location.href);
+      }
+    }
+
+    // single-instance プラグイン経由の deep-link イベント（Windows）
+    const unlistenDeepLinkUri = await listen<string>('deep-link-uri', async (event) => {
+      console.log('Deep link URI received (single-instance):', event.payload);
+      await processDeepLink(event.payload);
     });
     unlisteners.push(unlistenDeepLinkUri);
 
@@ -170,38 +188,8 @@ export async function setupDeepLinkListener() {
       // Protocol が mycheckapp の場合は処理
       if (event.payload.protocol === 'mycheckapp') {
         // path から fragment を抽出（パス: /auth-callback#access_token=...）
-        const pathParts = event.payload.path.split('#');
-        if (pathParts.length > 1) {
-          const hashParams = new URLSearchParams(pathParts[1]);
-          const access_token = hashParams.get('access_token');
-          const refresh_token = hashParams.get('refresh_token');
-
-          if (access_token && refresh_token) {
-            isLoading.set(true);
-            authError.set(null);
-
-            try {
-              const { error } = await supabaseClient.auth.setSession({
-                access_token,
-                refresh_token,
-              });
-
-              if (error) {
-                console.error('セッション設定エラー:', error);
-                authError.set(error.message);
-                return;
-              }
-
-              console.log('セッション確立成功（protocol-invoked経由）');
-            } catch (err) {
-              const message = typeof err === 'string' ? err : (err as Error).message;
-              authError.set(message || 'セッション確立に失敗しました');
-              console.error('セッション確立例外:', err);
-            } finally {
-              isLoading.set(false);
-            }
-          }
-        }
+        const uri = `mycheckapp://my-check-app${event.payload.path}`;
+        await processDeepLink(uri);
       }
     });
     unlisteners.push(unlistenProtocol);

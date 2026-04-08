@@ -163,6 +163,42 @@ pub fn run() {
                 use tauri_plugin_deep_link::DeepLinkExt;
                 app.deep_link().register_all()?;
             }
+
+            // Android では Intent から URI を抽出する
+            #[cfg(target_os = "android")]
+            {
+                use tauri::Emitter;
+                use tauri_plugin_deep_link::DeepLinkExt;
+
+                eprintln!("Android: Deep-link setup starting");
+
+                // スタートアップ時の deep-link を取得
+                match app.deep_link().get_current() {
+                    Ok(Some(urls)) => {
+                        eprintln!("Android: Deep links found on startup: {:?}", urls);
+                        if let Some(deep_link_url) = urls.first() {
+                            eprintln!("Android: Emitting deep-link-uri: {}", deep_link_url);
+                            let _ = app.emit("deep-link-uri", deep_link_url.to_string());
+                        }
+                    }
+                    Ok(None) => {
+                        eprintln!("Android: No deep links found on startup");
+                    }
+                    Err(e) => {
+                        eprintln!("Android: Error getting current deep link: {}", e);
+                    }
+                }
+
+                // 実行中の deep-link activation をリッスン
+                let app_handle = app.handle().clone();
+                app.deep_link().on_open_url(move |request| {
+                    if let Some(url) = request.urls().first() {
+                        eprintln!("Android: Deep link request received: {}", url);
+                        let _ = app_handle.emit("deep-link-uri", url.to_string());
+                    }
+                });
+            }
+
             Ok(())
         });
 
