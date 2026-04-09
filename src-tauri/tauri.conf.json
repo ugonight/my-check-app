@@ -37,10 +37,14 @@
   },
   "plugins": {
     "deep-link": {
-      "schemes": [
-        "mycheckapp"
-      ],
-      "appLink": false
+      "mobile": [
+        {
+          "scheme": [
+            "mycheckapp"
+          ],
+          "appLink": false
+        }
+      ]
     }
   }
 }

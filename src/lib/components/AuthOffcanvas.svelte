@@ -36,7 +36,7 @@
 <button
   bind:this={button}
   onclick={() => (isOpen = !isOpen)}
-  class="fixed bottom-4 left-4 w-12 h-12 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors flex items-center justify-center text-white z-40 shadow-lg"
+  class="fixed bottom-12 left-4 w-12 h-12 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors flex items-center justify-center text-white z-40 shadow-lg"
   title={strings.ACCOUNT}
 >
   <svg
