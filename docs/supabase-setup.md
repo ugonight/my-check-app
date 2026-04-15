@@ -9,17 +9,45 @@
 | カラム名 | 型 | 説明 |
 |---------|-----|------|
 | id | serial (PK) | 自動採番 |
+| user_id | uuid (FK) | auth.users.id への外部キー |
 | time | timestamptz | 記録した時刻（タイムゾーン対応） |
 | type | integer | 0=朝、1=夜 |
 
 **セットアップ**:
 
 ```sql
+-- 既存テーブルを削除（Google認証導入時：既存データはリセット）
+DROP TABLE IF EXISTS daily_checks CASCADE;
+
+-- テーブル作成（user_id は必須）
 CREATE TABLE daily_checks (
   id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   time TIMESTAMPTZ DEFAULT NOW(),
   type INTEGER NOT NULL CHECK (type IN (0, 1))
 );
+
+-- インデックス作成
+CREATE INDEX idx_daily_checks_user_id ON daily_checks(user_id);
+
+-- RLS 有効化
+ALTER TABLE daily_checks ENABLE ROW LEVEL SECURITY;
+
+-- ユーザーは自分のチェックのみ参照可能
+CREATE POLICY "Users can view their own checks" ON daily_checks
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- ユーザーは自分のチェックのみ作成可能
+CREATE POLICY "Users can insert their own checks" ON daily_checks
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- ユーザーは自分のチェックのみ更新可能
+CREATE POLICY "Users can update their own checks" ON daily_checks
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- ユーザーは自分のチェックのみ削除可能
+CREATE POLICY "Users can delete their own checks" ON daily_checks
+  FOR DELETE USING (auth.uid() = user_id);
 ```
 
 ---
@@ -66,11 +94,38 @@ CREATE TABLE daily_checks (
 Supabaseダッシュボード → **SQL Editor** で以下を実行：
 
 ```sql
+-- 既存テーブルを削除（Google認証導入時：既存データはリセット）
+DROP TABLE IF EXISTS daily_checks CASCADE;
+
+-- テーブル作成（user_id は必須）
 CREATE TABLE daily_checks (
   id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   time TIMESTAMPTZ DEFAULT NOW(),
   type INTEGER NOT NULL CHECK (type IN (0, 1))
 );
+
+-- インデックス作成
+CREATE INDEX idx_daily_checks_user_id ON daily_checks(user_id);
+
+-- RLS 有効化
+ALTER TABLE daily_checks ENABLE ROW LEVEL SECURITY;
+
+-- ユーザーは自分のチェックのみ参照可能
+CREATE POLICY "Users can view their own checks" ON daily_checks
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- ユーザーは自分のチェックのみ作成可能
+CREATE POLICY "Users can insert their own checks" ON daily_checks
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- ユーザーは自分のチェックのみ更新可能
+CREATE POLICY "Users can update their own checks" ON daily_checks
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- ユーザーは自分のチェックのみ削除可能
+CREATE POLICY "Users can delete their own checks" ON daily_checks
+  FOR DELETE USING (auth.uid() = user_id);
 ```
 
 ### 3. constants テーブル作成

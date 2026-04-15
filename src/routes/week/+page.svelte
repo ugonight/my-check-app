@@ -2,6 +2,8 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { constants } from "$lib/stores/constants";
+  import { isAuthenticated, getAccessToken } from "$lib/stores/auth";
+  import { goto } from "$app/navigation";
 
   let allChecks: { type: number; time: string }[] = $state([]);
   let weekData: {
@@ -75,9 +77,21 @@
   }
 
   onMount(async () => {
+    // 認証チェック
+    if (!$isAuthenticated) {
+      goto("/auth/login");
+      return;
+    }
+
     try {
+      const token = await getAccessToken();
+      if (!token) {
+        goto("/auth/login");
+        return;
+      }
+
       const checks =
-        await invoke<{ type: number; time: string }[]>("get_recent_checks");
+        await invoke<{ type: number; time: string }[]>("get_recent_checks", { token });
       allChecks = checks;
       generateWeekData();
     } catch (e) {
@@ -130,104 +144,106 @@
   </h1>
 </div>
 
-{#if loading}
-  <p class="text-neutral-500 dark:text-neutral-400">読み込み中...</p>
-{:else}
-  <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-    {#each weekData as day (day.date.toISOString())}
-      <div
-        class={`p-4 sm:p-5 rounded-lg border-2 transition-colors ${
-          isToday(day.date)
-            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-            : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800"
-        }`}
-      >
-        <div class="flex items-center justify-between">
-          <div class="text-left">
-            <p class="font-semibold text-sm sm:text-base">
-              {formatDate(day.date)}
-            </p>
-            {#if isToday(day.date)}
-              <p class="text-xs text-blue-600 dark:text-blue-400">今日</p>
-            {/if}
-          </div>
-          <div class="flex gap-2">
-            <div
-              class={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-md font-semibold text-sm border-2 transition-colors ${
-                day.hasMorning
-                  ? "bg-green-100 dark:bg-green-900/40 border-green-500 text-green-700 dark:text-green-300"
-                  : "bg-neutral-100 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 text-neutral-500 dark:text-neutral-400"
-              }`}
-            >
-              {day.hasMorning ? "✓" : "-"}
-            </div>
-            <div
-              class={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-md font-semibold text-sm border-2 transition-colors ${
-                day.hasNight
-                  ? "bg-green-100 dark:bg-green-900/40 border-green-500 text-green-700 dark:text-green-300"
-                  : "bg-neutral-100 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 text-neutral-500 dark:text-neutral-400"
-              }`}
-            >
-              {day.hasNight ? "✓" : "-"}
-            </div>
-          </div>
-        </div>
+<div class="flex flex-col items-center w-full px-4 sm:px-0">
+  {#if loading}
+    <p class="text-neutral-500 dark:text-neutral-400">読み込み中...</p>
+  {:else}
+    <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      {#each weekData as day (day.date.toISOString())}
         <div
-          class="text-xs text-neutral-500 dark:text-neutral-400 mt-2 text-left"
+          class={`p-4 sm:p-5 rounded-lg border-2 transition-colors ${
+            isToday(day.date)
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+              : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800"
+          }`}
         >
-          <p>
-            朝: {day.hasMorning
-              ? `${getTimeDisplay(day.timeMorning)} 完了`
-              : "未実施"}
-          </p>
-          <p>
-            夜: {day.hasNight
-              ? `${getTimeDisplay(day.timeNight)} 完了`
-              : "未実施"}
-          </p>
-        </div>
-      </div>
-    {/each}
-  </div>
-
-  <!-- 統計情報 -->
-  {#if weekData.length > 0}
-    <div
-      class="mt-8 sm:mt-10 p-4 sm:p-6 rounded-lg bg-neutral-100 dark:bg-neutral-800 w-full max-w-2xl"
-    >
-      <h2 class="font-semibold mb-4 text-lg">この週の統計</h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div class="text-center">
-          <p
-            class="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400"
+          <div class="flex items-center justify-between">
+            <div class="text-left">
+              <p class="font-semibold text-sm sm:text-base">
+                {formatDate(day.date)}
+              </p>
+              {#if isToday(day.date)}
+                <p class="text-xs text-blue-600 dark:text-blue-400">今日</p>
+              {/if}
+            </div>
+            <div class="flex gap-2">
+              <div
+                class={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-md font-semibold text-sm border-2 transition-colors ${
+                  day.hasMorning
+                    ? "bg-green-100 dark:bg-green-900/40 border-green-500 text-green-700 dark:text-green-300"
+                    : "bg-neutral-100 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 text-neutral-500 dark:text-neutral-400"
+                }`}
+              >
+                {day.hasMorning ? "✓" : "-"}
+              </div>
+              <div
+                class={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-md font-semibold text-sm border-2 transition-colors ${
+                  day.hasNight
+                    ? "bg-green-100 dark:bg-green-900/40 border-green-500 text-green-700 dark:text-green-300"
+                    : "bg-neutral-100 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 text-neutral-500 dark:text-neutral-400"
+                }`}
+              >
+                {day.hasNight ? "✓" : "-"}
+              </div>
+            </div>
+          </div>
+          <div
+            class="text-xs text-neutral-500 dark:text-neutral-400 mt-2 text-left"
           >
-            {weekData.filter((d) => d.hasMorning).length}
-          </p>
-          <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
-            朝チェック
-          </p>
+            <p>
+              朝: {day.hasMorning
+                ? `${getTimeDisplay(day.timeMorning)} 完了`
+                : "未実施"}
+            </p>
+            <p>
+              夜: {day.hasNight
+                ? `${getTimeDisplay(day.timeNight)} 完了`
+                : "未実施"}
+            </p>
+          </div>
         </div>
-        <div class="text-center">
-          <p
-            class="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400"
-          >
-            {weekData.filter((d) => d.hasNight).length}
-          </p>
-          <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
-            夜チェック
-          </p>
-        </div>
-        <div class="text-center">
-          <p
-            class="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400"
-          >
-            {weekData.filter((d) => d.hasMorning && d.hasNight).length}
-          </p>
-          <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
-            完全達成
-          </p>
-        </div>
-      </div>
+      {/each}
     </div>
+
+    <!-- 統計情報 -->
+    {#if weekData.length > 0}
+      <div
+        class="mt-8 sm:mt-10 p-4 sm:p-6 rounded-lg bg-neutral-100 dark:bg-neutral-800 w-full max-w-2xl"
+      >
+        <h2 class="font-semibold mb-4 text-lg">この週の統計</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div class="text-center">
+            <p
+              class="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400"
+            >
+              {weekData.filter((d) => d.hasMorning).length}
+            </p>
+            <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
+              朝チェック
+            </p>
+          </div>
+          <div class="text-center">
+            <p
+              class="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400"
+            >
+              {weekData.filter((d) => d.hasNight).length}
+            </p>
+            <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
+              夜チェック
+            </p>
+          </div>
+          <div class="text-center">
+            <p
+              class="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400"
+            >
+              {weekData.filter((d) => d.hasMorning && d.hasNight).length}
+            </p>
+            <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
+              完全達成
+            </p>
+          </div>
+        </div>
+      </div>
+    {/if}
   {/if}
-{/if}
+</div>
